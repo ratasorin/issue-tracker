@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer layers {
+  .ripple {
+    position: absolute; /* The absolute position we mentioned earlier */
+    border-radius: 50%;
+    z-index: 1;
+    animation: ripple 600ms ease-out forwards;
+    background-color: rgb(255, 255, 255);
+  }
+  @keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  .fade-out-and-up {
+    animation: fade-out-and-up 350ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes fade-out-and-up {
+    0% {
+      transform: translateY(0);
+      opacity: 100%;
+    }
+    100% {
+      transform: translateY(-100px);
+      opacity: 0;
+    }
+  }
+
+  .fade-in-and-up {
+    animation: fade-in-and-up 350ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes fade-in-and-up {
+    0% {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 100%;
+    }
+  }
+}
