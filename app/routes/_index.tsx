@@ -14,6 +14,7 @@ import { useState } from "react";
 import { animateRipple } from "src/animations/ripple-effect";
 import { Outlet } from "@remix-run/react";
 import Modal from "src/components/modal";
+import { atom, useAtom } from "jotai";
 
 const TIMISOARA_MIN_X = 2349008.5153278033;
 const TIMISOARA_MIN_Y = 5729557.225162899;
@@ -39,9 +40,11 @@ const fill = new Fill({
   color: "rgb(0, 0, 0, 0.30)",
 });
 
+export const modalOpenAtom = atom(true);
+
 export default function App() {
   const [map, setMap] = useState<Map | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useAtom(modalOpenAtom);
   return (
     <>
       {modalOpen && <Modal />}
@@ -81,29 +84,31 @@ export default function App() {
             );
         }}
       ></div>
-      <div className="absolute bottom-10 flex flex-row justify-center w-full">
-        <button
-          onClick={(event) => {
-            const button = event.currentTarget;
-            animateRipple(event);
+      {!modalOpen && (
+        <div className="fade-in-and-up absolute bottom-10 flex flex-row justify-center w-full">
+          <button
+            onClick={(event) => {
+              const button = event.currentTarget;
+              button.classList.add("fade-out-and-down");
 
-            setTimeout(
-              () => {
-                console.log({ button });
-                if (!button) return;
+              setTimeout(
+                () => {
+                  console.log({ button });
+                  if (!button) return;
 
-                button.classList.add("fade-out-and-up");
-                setModalOpen(true);
-              },
-              // see tailwind.css for duration of ripple animation
-              500
-            );
-          }}
-          className="overflow-hidden relative font-poppins font-bold bg-white text-slate-900 px-4 py-2 uppercase rounded-md border-2 border-slate-300 shadow-md hover:bg-slate-200 hover:shadow-sm hover:border-slate-500"
-        >
-          Înregistrați o sesizare
-        </button>
-      </div>
+                  setModalOpen(true);
+                },
+                // see tailwind.css for duration of ripple animation
+                250
+              );
+            }}
+            className="overflow-hidden relative font-poppins font-bold bg-white text-slate-900 px-4 py-2 uppercase rounded-md border-2 border-slate-300 shadow-md hover:bg-slate-200 hover:shadow-sm hover:border-slate-500"
+          >
+            Înregistrați o sesizare
+          </button>
+        </div>
+      )}
+
       <Outlet />
     </>
   );
