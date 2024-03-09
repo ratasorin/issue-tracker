@@ -3,7 +3,6 @@ import View from "ol/View.js";
 import OSM from "ol/source/OSM.js";
 import TileLayer from "ol/layer/Tile.js";
 import { defaults as defaultControls } from "ol/control.js";
-import { Extent } from "ol/extent.js";
 import VectorLayer from "ol/layer/Vector.js";
 import VectorSource from "ol/source/Vector.js";
 import GeoJSON from "ol/format/GeoJSON.js";
@@ -11,25 +10,14 @@ import Style from "ol/style/Style.js";
 import Stroke from "ol/style/Stroke.js";
 import Fill from "ol/style/Fill.js";
 import { useState } from "react";
-import { animateRipple } from "src/animations/ripple-effect";
 import { Outlet } from "@remix-run/react";
-import Modal from "src/components/modal";
+import Modal from "src/components/location-modal";
 import { atom, useAtom } from "jotai";
-
-const TIMISOARA_MIN_X = 2349008.5153278033;
-const TIMISOARA_MIN_Y = 5729557.225162899;
-const TIMISOARA_MAX_X = 2371968.8796409625;
-const TIMISOARA_MAX_Y = 5754304.240341486;
-
-const TIMISOARA_CENTER_X = (TIMISOARA_MAX_X + TIMISOARA_MIN_X) / 2;
-const TIMISOARA_CENTER_Y = (TIMISOARA_MAX_Y + TIMISOARA_MIN_Y) / 2;
-
-const TIMISOARA_BOUNDS: Extent = [
-  TIMISOARA_MIN_X,
-  TIMISOARA_MIN_Y,
-  TIMISOARA_MAX_X,
-  TIMISOARA_MAX_Y,
-];
+import {
+  TIMISOARA_BOUNDS,
+  TIMISOARA_CENTER_X,
+  TIMISOARA_CENTER_Y,
+} from "src/constants";
 
 const stroke = new Stroke({
   color: "rgb(0, 0, 0, 0.70)",
