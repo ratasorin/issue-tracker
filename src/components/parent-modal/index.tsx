@@ -1,23 +1,23 @@
-import LocationModal from "./location-modal";
+import LocationModal from "../location-modal";
 import { IoCloseCircleOutline } from "react-icons/io5";
-import DetailsModal from "./details-modal";
-import { atom, useAtom } from "jotai";
-import { modalOpenAtom } from "~/routes/_index";
-
-export interface Position {
-  longitude: number;
-  latitude: number;
-}
-export const locationAtom = atom<Position | null>(null);
-export const pageAtom = atom<number>(1);
+import DetailsModal from "../details-modal";
+import { useAtom } from "jotai";
+import ConfirmLocationModal from "../confirm-location-modal";
+import { locationAtom, navigationModeActiveAtom, pageAtom } from "./state";
+import { modalOpenAtom } from "~/routes/state";
 
 const ParentModal = () => {
   const [location] = useAtom(locationAtom);
   const [, setModalOpen] = useAtom(modalOpenAtom);
   const [page, setPage] = useAtom(pageAtom);
+
+  const [navigationModeActive] = useAtom(navigationModeActiveAtom);
+
+  if (navigationModeActive) return <ConfirmLocationModal />;
+
   return (
     <div className="z-20 absolute bottom-0 left-0 w-screen h-screen bg-black/60 flex flex-col justify-end">
-      <div className="relative fade-in-and-up bg-white w-full px-6 py-6 flex flex-col rounded-md items-center">
+      <div className="relative fade-in-and-up bg-white w-full px-6 py-6 flex flex-col rounded-md items-center max-h-screen">
         <div className="w-full flex flex-row-reverse">
           <button
             className="text-3xl text-gray-500 mb-2"

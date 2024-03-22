@@ -38,7 +38,7 @@ const DragAndDrop: FunctionComponent<FileState> = ({ files, setFiles }) => {
           <div className="space-y-6 text-center">
             <div className="m-auto w-32 sm:w-40" />
             <p className="font-poppins text-sm text-slate-700">
-              <i>"Drag and drop"</i> aici sau{" "}
+              <i>&quot;Drag and drop&quot;</i> aici sau{" "}
               <label
                 htmlFor="dragOver"
                 title="Upload a file"

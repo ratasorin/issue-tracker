@@ -1,78 +1,62 @@
-import debounce from "debounce";
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import { FaRegEdit } from "react-icons/fa";
 import { HiMapPin } from "react-icons/hi2";
 import { animateRipple } from "src/animations/ripple-effect";
-import { Position, locationAtom, pageAtom } from "./parent-modal";
-
-interface Prediction {
-  description: string;
-  matched_substrings: { length: number; offset: number }[];
-  place_id: string;
-  reference: string;
-}
+import { selectedPredictionAtom } from "./state";
+import {
+  Position,
+  locationAtom,
+  navigationModeActiveAtom,
+  pageAtom,
+} from "../parent-modal/state";
+import { useAutocompleteSuggestionFromGoogle } from "src/hooks/autocomplete";
+import useCoordinatesFromPlaceId from "src/hooks/coordinates-from-place-id";
+import { useLocationFromCoordinates } from "src/hooks/location-from-coordinates";
 
 const LocationModal = () => {
   const [, changePage] = useAtom(pageAtom);
   const [location, setLocation] = useAtom(locationAtom);
+  const [, setNavigationModeActive] = useAtom(navigationModeActiveAtom);
 
-  const [selectedPrediction, setSelectedPrediction] =
-    useState<Prediction | null>(null);
-
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
-
-  const getPredictedPlaceCoordinates = useCallback(
-    debounce((prediction: Prediction) => {
-      console.log({ prediction });
-      fetch(`/api/google-location-to-coordinates/${prediction.place_id}`)
-        .then((r) => r.json())
-        .then((response) => {
-          console.log(response);
-          const latitude = response.lat;
-          const longitude = response.lng;
-          setLocation({ latitude, longitude });
-          toast.success(
-            `Locația: ${prediction.description} a fost aleasă cu succes!`
-          );
-        });
-    }, 500),
-    []
+  const [selectedPrediction, setSelectedPrediction] = useAtom(
+    selectedPredictionAtom
   );
 
-  const getLocationFromCoordinates = useCallback(
-    debounce((position: Position) => {
-      fetch(
-        `/api/google-coordinates-to-location/${position.latitude}/${position.longitude}`
-      )
-        .then((r) => r.json())
-        .then((response) => {
-          const formatted_address = response.formatted_address;
-          console.log({ formatted_address });
-          toast.success(
-            `Locația: ${formatted_address} a fost aleasă cu succes!`,
-            { duration: 5000 }
-          );
-        });
-    }, 500),
-    []
-  );
+  const { refreshAutocompleteInput, predictions } =
+    useAutocompleteSuggestionFromGoogle();
+
+  const { refreshPlaceId, place } = useCoordinatesFromPlaceId();
+  useEffect(() => {
+    if (selectedPrediction != null) refreshPlaceId(selectedPrediction.place_id);
+  }, [refreshPlaceId, selectedPrediction]);
 
   useEffect(() => {
-    if (selectedPrediction != null)
-      getPredictedPlaceCoordinates(selectedPrediction);
-  }, [getPredictedPlaceCoordinates, selectedPrediction]);
-
-  const getAutocompleteResult = debounce((input: string) => {
-    console.log({ input });
-    fetch(`/api/google-autocomplete/${input}`)
-      .then((r) => r.json())
-      .then((response) => {
-        console.log(response.predictions);
-        setPredictions(response.predictions);
+    if (place != null && selectedPrediction != null) {
+      setLocation({
+        latitude: place.geometry.location.lat,
+        longitude: place.geometry.location.lng,
       });
-  }, 500);
+      toast.success(
+        `Locația: ${selectedPrediction.description} a fost aleasă cu succes!`
+      );
+    }
+  }, [place, setLocation]);
+
+  const { refreshCoordinates, locationFromCoordinates } =
+    useLocationFromCoordinates();
+
+  useEffect(() => {
+    if (locationFromCoordinates) {
+      toast.success(
+        `Locația: ${locationFromCoordinates.formatted_address} a fost aleasă cu succes!`,
+        {
+          duration: 5000,
+        }
+      );
+    }
+  }, [locationFromCoordinates]);
 
   const getUserCurrentPosition = useCallback(() => {
     const position = new Promise<Position>((resolve, reject) => {
@@ -113,12 +97,15 @@ const LocationModal = () => {
         })
         .catch((error) => {
           // Handle error
-          console.error("Error checking location permission:", error);
+          console.error({ error });
+          toast.error("Error checking location permission!", {
+            duration: 2000,
+          });
         });
     } else {
       // Geolocation is not supported
       toast.error("Geolocation is not supported by this browser!", {
-        duration: 1000,
+        duration: 2000,
       });
     }
   }, []);
@@ -150,7 +137,7 @@ const LocationModal = () => {
               return;
             }
 
-            getLocationFromCoordinates(position);
+            refreshCoordinates(position);
           }}
         >
           FOLOSESTE LOCATIA CURENTA
@@ -167,15 +154,15 @@ const LocationModal = () => {
         </label>
         <input
           onChange={(event) => {
-            getAutocompleteResult(event.currentTarget.value);
+            refreshAutocompleteInput(event.currentTarget.value);
           }}
           type="search"
           id="location"
           className="border-2 border-slate-300 px-4 py-2 rounded-md shadow-sm"
         />
       </div>
-      <div className="max-h-56 overflow-auto mb-6">
-        {!predictions.length
+      <div className="flex-1 overflow-auto mb-6">
+        {!predictions || !predictions.length
           ? null
           : predictions.map((prediction) => (
               <button
@@ -189,6 +176,7 @@ const LocationModal = () => {
                 onClick={(event) => {
                   setSelectedPrediction(prediction);
                   animateRipple(event);
+                  setNavigationModeActive(true);
                 }}
               >
                 {prediction.description}

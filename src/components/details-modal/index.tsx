@@ -1,10 +1,10 @@
 import { Form } from "@remix-run/react";
-import DragAndDrop, { UploadFile } from "./drag-and-drop/drag-and-drop";
-import Preview from "./drag-and-drop/preview";
+import DragAndDrop, { UploadFile } from "../drag-and-drop/drag-and-drop";
+import Preview from "../drag-and-drop/preview";
 import { useState } from "react";
 import { animateRipple } from "src/animations/ripple-effect";
 import { useAtom } from "jotai";
-import { locationAtom } from "./parent-modal";
+import { locationAtom } from "../parent-modal/state";
 
 const BuildingInformationModal = () => {
   const [files, setFiles] = useState<UploadFile[]>([]);

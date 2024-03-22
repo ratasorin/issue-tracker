@@ -12,8 +12,8 @@ import Stroke from "ol/style/Stroke.js";
 import Fill from "ol/style/Fill.js";
 import { useEffect, useMemo, useState } from "react";
 import { Outlet, useLoaderData } from "@remix-run/react";
-import Modal, { Position } from "src/components/parent-modal";
-import { atom, useAtom } from "jotai";
+import Modal from "src/components/parent-modal";
+import { useAtom } from "jotai";
 import {
   TIMISOARA_BOUNDS,
   TIMISOARA_CENTER_X,
@@ -24,21 +24,17 @@ import { Point } from "ol/geom.js";
 import { Feature } from "ol";
 import { transform } from "ol/proj.js";
 import ComplaintModal from "src/components/information-modal";
-
-export interface Complaint {
-  complaint_id: string;
-  title: string;
-  description: string;
-  latitude: string;
-  longitude: string;
-}
-
-export type ComplaintWithImage = Complaint & { images: string[] };
-
-export interface ComplaintImages {
-  complaint_id: string;
-  images: string[];
-}
+import {
+  Position,
+  navigationModeActiveAtom,
+} from "src/components/parent-modal/state";
+import {
+  Complaint,
+  ComplaintImages,
+  complaintAtom,
+  locationSuggestionAtom,
+  modalOpenAtom,
+} from "./state";
 
 const stroke = new Stroke({
   color: "rgb(0, 0, 0, 0.70)",
@@ -66,9 +62,6 @@ export const loader = async () => {
   return { complaints, complaints_images };
 };
 
-export const modalOpenAtom = atom(false);
-export const complaintAtom = atom<ComplaintWithImage | null>(null);
-
 export default function App() {
   const [map, setMap] = useState<Map | null>(null);
   const [modalOpen, setModalOpen] = useAtom(modalOpenAtom);
@@ -76,6 +69,7 @@ export default function App() {
   const { complaints, complaints_images } = useLoaderData<typeof loader>();
 
   const [coordinates, setCoordinates] = useState<Position | null>(null);
+  const [locationSuggestion] = useAtom(locationSuggestionAtom);
 
   useEffect(() => {
     if (!coordinates) return;
@@ -133,6 +127,20 @@ export default function App() {
     [complaints]
   );
 
+  const complaintsLayer = useMemo(
+    () =>
+      new VectorLayer({
+        source: new VectorSource({ features }),
+      }),
+    [features]
+  );
+
+  const [navigationModeActive] = useAtom(navigationModeActiveAtom);
+  useEffect(() => {
+    if (!navigationModeActive && map) map.addLayer(complaintsLayer);
+    if (navigationModeActive && map) map.removeLayer(complaintsLayer);
+  }, [navigationModeActive, map, complaintsLayer]);
+
   useEffect(() => {
     if (!map) return;
     map.on("click", function (evt) {
@@ -172,9 +180,6 @@ export default function App() {
               new Map({
                 layers: [
                   new TileLayer({ source: new OSM() }),
-                  new VectorLayer({
-                    source: new VectorSource({ features }),
-                  }),
                   new VectorLayer({
                     style: new Style({
                       fill,
